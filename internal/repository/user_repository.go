@@ -95,3 +95,35 @@ func (r *UserRepository) List(page, pageSize int) ([]*domain.User, int64, error)
 
 	return users, total, nil
 }
+
+// GetUserWithRoles finds a user by ID with roles preloaded
+func (r *UserRepository) GetUserWithRoles(id uint) (*domain.User, error) {
+	var user domain.User
+	err := r.db.Preload("Roles.Permissions").First(&user, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+// UserHasPermission checks if a user has a specific permission
+func (r *UserRepository) UserHasPermission(userID uint, permissionCode string) (bool, error) {
+	var count int64
+	err := r.db.Table("users").
+		Select("COUNT(DISTINCT permissions.id)").
+		Joins("INNER JOIN user_roles ON users.id = user_roles.user_id").
+		Joins("INNER JOIN roles ON user_roles.role_id = roles.id").
+		Joins("INNER JOIN role_permissions ON roles.id = role_permissions.role_id").
+		Joins("INNER JOIN permissions ON role_permissions.permission_id = permissions.id").
+		Where("users.id = ? AND permissions.code = ? AND users.deleted_at IS NULL", userID, permissionCode).
+		Count(&count).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}

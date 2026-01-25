@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/minhtran/his/internal/domain"
 	"github.com/minhtran/his/internal/dto"
 	"github.com/minhtran/his/internal/pkg/jwt"
 	"github.com/minhtran/his/internal/repository"
@@ -30,66 +29,6 @@ func NewAuthService(userRepo *repository.UserRepository, jwtManager *jwt.Manager
 		userRepo:   userRepo,
 		jwtManager: jwtManager,
 	}
-}
-
-// Register registers a new user
-func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, error) {
-	// Check if user already exists
-	existingUser, err := s.userRepo.FindByUsername(req.Username)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check existing user: %w", err)
-	}
-	if existingUser != nil {
-		return nil, ErrUserExists
-	}
-
-	existingEmail, err := s.userRepo.FindByEmail(req.Email)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check existing email: %w", err)
-	}
-	if existingEmail != nil {
-		return nil, ErrUserExists
-	}
-
-	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
-	}
-
-	// Create user
-	user := &domain.User{
-		Username:     req.Username,
-		Email:        req.Email,
-		PasswordHash: string(hashedPassword),
-		FullName:     req.FullName,
-		PhoneNumber:  req.PhoneNumber,
-		IsActive:     true,
-	}
-
-	if err := s.userRepo.Create(user); err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
-	}
-
-	// Generate tokens
-	tokenPair, err := s.jwtManager.GenerateTokenPair(user.ID, user.Username, user.Email)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate tokens: %w", err)
-	}
-
-	return &dto.AuthResponse{
-		User: &dto.UserResponse{
-			ID:          user.ID,
-			Username:    user.Username,
-			Email:       user.Email,
-			FullName:    user.FullName,
-			PhoneNumber: user.PhoneNumber,
-			IsActive:    user.IsActive,
-		},
-		AccessToken:  tokenPair.AccessToken,
-		RefreshToken: tokenPair.RefreshToken,
-		ExpiresIn:    tokenPair.ExpiresIn,
-	}, nil
 }
 
 // Login authenticates a user

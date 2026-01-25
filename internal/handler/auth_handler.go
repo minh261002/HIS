@@ -22,36 +22,6 @@ func NewAuthHandler(authService *service.AuthService) *AuthHandler {
 	}
 }
 
-// Register handles user registration
-// @Summary Register a new user
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param request body dto.RegisterRequest true "Registration request"
-// @Success 201 {object} response.Response{data=dto.AuthResponse}
-// @Failure 400 {object} response.Response
-// @Failure 422 {object} response.Response
-// @Router /api/v1/auth/register [post]
-func (h *AuthHandler) Register(c *gin.Context) {
-	var req dto.RegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.ValidationError(c, map[string]interface{}{"error": err.Error()})
-		return
-	}
-
-	authResp, err := h.authService.Register(&req)
-	if err != nil {
-		if errors.Is(err, service.ErrUserExists) {
-			response.BadRequest(c, "User already exists", nil)
-			return
-		}
-		response.InternalServerError(c, "Failed to register user")
-		return
-	}
-
-	response.Created(c, "User registered successfully", authResp)
-}
-
 // Login handles user login
 // @Summary Login user
 // @Tags auth

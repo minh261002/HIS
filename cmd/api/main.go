@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/minhtran/his/internal/config"
 	"github.com/minhtran/his/internal/handler"
+	"github.com/minhtran/his/internal/middleware"
 	"github.com/minhtran/his/internal/pkg/jwt"
 	"github.com/minhtran/his/internal/pkg/logger"
 	"github.com/minhtran/his/internal/repository"
@@ -57,9 +58,14 @@ func main() {
 
 	// Initialize services
 	authService := service.NewAuthService(userRepo, jwtManager)
+	userService := service.NewUserService(userRepo, db)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
+	userHandler := handler.NewUserHandler(userService)
+
+	// Initialize middleware
+	rbacMiddleware := middleware.NewRBACMiddleware(userRepo)
 
 	// Setup Gin
 	if cfg.Server.Mode == "release" {
@@ -68,7 +74,7 @@ func main() {
 	router := gin.New()
 
 	// Setup routes
-	handler.SetupRoutes(router, authHandler, jwtManager, cfg.Server.AllowedOrigins)
+	handler.SetupRoutes(router, authHandler, userHandler, jwtManager, rbacMiddleware, cfg.Server.AllowedOrigins)
 
 	// Create HTTP server
 	srv := &http.Server{

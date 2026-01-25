@@ -8,7 +8,14 @@ import (
 )
 
 // SetupRoutes configures all application routes
-func SetupRoutes(r *gin.Engine, authHandler *AuthHandler, jwtManager *jwt.Manager, allowedOrigins []string) {
+func SetupRoutes(
+	r *gin.Engine,
+	authHandler *AuthHandler,
+	userHandler *UserHandler,
+	jwtManager *jwt.Manager,
+	rbacMiddleware *middleware.RBACMiddleware,
+	allowedOrigins []string,
+) {
 	// Apply global middleware
 	r.Use(middleware.RecoveryMiddleware())
 	r.Use(middleware.LoggerMiddleware())
@@ -24,10 +31,9 @@ func SetupRoutes(r *gin.Engine, authHandler *AuthHandler, jwtManager *jwt.Manage
 	// API v1 routes
 	v1 := r.Group("/api/v1")
 	{
-		// Public auth routes
+		// Public auth routes (only login and refresh)
 		auth := v1.Group("/auth")
 		{
-			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/refresh", authHandler.RefreshToken)
 		}
@@ -39,7 +45,17 @@ func SetupRoutes(r *gin.Engine, authHandler *AuthHandler, jwtManager *jwt.Manage
 			// Auth protected routes
 			protected.GET("/auth/profile", authHandler.GetProfile)
 
-			// Add more protected routes here
+			// User management routes (admin only)
+			users := protected.Group("/users")
+			users.Use(rbacMiddleware.RequirePermission("users.manage"))
+			{
+				users.POST("", userHandler.CreateUser)
+				users.GET("", userHandler.ListUsers)
+				users.GET("/:id", userHandler.GetUser)
+				users.PUT("/:id", userHandler.UpdateUser)
+				users.DELETE("/:id", userHandler.DeleteUser)
+				users.POST("/:id/roles", userHandler.AssignRoles)
+			}
 		}
 	}
 }
