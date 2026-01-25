@@ -15,6 +15,12 @@ INSERT INTO permissions (name, code, description, module, created_at, updated_at
 ('Delete Users', 'users.delete', 'Delete users', 'users', NOW(), NOW()),
 ('Manage Users', 'users.manage', 'Full user management access', 'users', NOW(), NOW()),
 
+-- Patient management permissions
+('View Patients', 'patients.view', 'View patient list and details', 'patients', NOW(), NOW()),
+('Create Patients', 'patients.create', 'Register new patients', 'patients', NOW(), NOW()),
+('Update Patients', 'patients.update', 'Update patient information', 'patients', NOW(), NOW()),
+('Delete Patients', 'patients.delete', 'Delete patients', 'patients', NOW(), NOW()),
+
 -- Role management permissions
 ('View Roles', 'roles.view', 'View role list and details', 'roles', NOW(), NOW()),
 ('Create Roles', 'roles.create', 'Create new roles', 'roles', NOW(), NOW()),
@@ -41,7 +47,32 @@ FROM roles r
 CROSS JOIN permissions p
 WHERE r.code = 'ADMIN'
 AND p.code IN ('users.view', 'users.create', 'users.update', 'users.delete', 'users.manage', 
-               'roles.view', 'roles.create', 'roles.update', 'roles.delete');
+               'roles.view', 'roles.create', 'roles.update', 'roles.delete',
+               'patients.view', 'patients.create', 'patients.update', 'patients.delete');
+
+-- Assign patient permissions to DOCTOR role
+INSERT INTO role_permissions (role_id, permission_id, created_at)
+SELECT r.id, p.id, NOW()
+FROM roles r
+CROSS JOIN permissions p
+WHERE r.code = 'DOCTOR'
+AND p.code IN ('patients.view', 'patients.create', 'patients.update');
+
+-- Assign patient permissions to NURSE role
+INSERT INTO role_permissions (role_id, permission_id, created_at)
+SELECT r.id, p.id, NOW()
+FROM roles r
+CROSS JOIN permissions p
+WHERE r.code = 'NURSE'
+AND p.code IN ('patients.view', 'patients.create', 'patients.update');
+
+-- Assign patient permissions to RECEPTIONIST role
+INSERT INTO role_permissions (role_id, permission_id, created_at)
+SELECT r.id, p.id, NOW()
+FROM roles r
+CROSS JOIN permissions p
+WHERE r.code = 'RECEPTIONIST'
+AND p.code IN ('patients.view', 'patients.create', 'patients.update');
 
 -- Create default admin user
 -- Password: Admin@123 (bcrypt hash with cost 10)

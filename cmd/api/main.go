@@ -55,14 +55,17 @@ func main() {
 
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(db)
+	patientRepo := repository.NewPatientRepository(db)
 
 	// Initialize services
 	authService := service.NewAuthService(userRepo, jwtManager)
 	userService := service.NewUserService(userRepo, db)
+	patientService := service.NewPatientService(patientRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
+	patientHandler := handler.NewPatientHandler(patientService)
 
 	// Initialize middleware
 	rbacMiddleware := middleware.NewRBACMiddleware(userRepo)
@@ -74,7 +77,7 @@ func main() {
 	router := gin.New()
 
 	// Setup routes
-	handler.SetupRoutes(router, authHandler, userHandler, jwtManager, rbacMiddleware, cfg.Server.AllowedOrigins)
+	handler.SetupRoutes(router, authHandler, userHandler, patientHandler, jwtManager, rbacMiddleware, cfg.Server.AllowedOrigins)
 
 	// Create HTTP server
 	srv := &http.Server{

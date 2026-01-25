@@ -12,6 +12,7 @@ func SetupRoutes(
 	r *gin.Engine,
 	authHandler *AuthHandler,
 	userHandler *UserHandler,
+	patientHandler *PatientHandler,
 	jwtManager *jwt.Manager,
 	rbacMiddleware *middleware.RBACMiddleware,
 	allowedOrigins []string,
@@ -55,6 +56,34 @@ func SetupRoutes(
 				users.PUT("/:id", userHandler.UpdateUser)
 				users.DELETE("/:id", userHandler.DeleteUser)
 				users.POST("/:id/roles", userHandler.AssignRoles)
+			}
+
+			// Patient management routes
+			patients := protected.Group("/patients")
+			{
+				// Statistics (requires view permission)
+				patients.GET("/stats", rbacMiddleware.RequirePermission("patients.view"), patientHandler.GetPatientStats)
+
+				// Search (requires view permission)
+				patients.GET("/search", rbacMiddleware.RequirePermission("patients.view"), patientHandler.SearchPatients)
+
+				// Get by code (requires view permission)
+				patients.GET("/code/:code", rbacMiddleware.RequirePermission("patients.view"), patientHandler.GetPatientByCode)
+
+				// Register patient (requires create permission)
+				patients.POST("", rbacMiddleware.RequirePermission("patients.create"), patientHandler.RegisterPatient)
+
+				// List patients (requires view permission)
+				patients.GET("", rbacMiddleware.RequirePermission("patients.view"), patientHandler.ListPatients)
+
+				// Get patient details (requires view permission)
+				patients.GET("/:id", rbacMiddleware.RequirePermission("patients.view"), patientHandler.GetPatient)
+
+				// Update patient (requires update permission)
+				patients.PUT("/:id", rbacMiddleware.RequirePermission("patients.update"), patientHandler.UpdatePatient)
+
+				// Delete patient (requires delete permission - admin only)
+				patients.DELETE("/:id", rbacMiddleware.RequirePermission("patients.delete"), patientHandler.DeletePatient)
 			}
 		}
 	}
