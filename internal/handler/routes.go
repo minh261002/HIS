@@ -16,6 +16,7 @@ func SetupRoutes(
 	allergyHandler *PatientAllergyHandler,
 	historyHandler *PatientMedicalHistoryHandler,
 	appointmentHandler *AppointmentHandler,
+	visitHandler *VisitHandler,
 	jwtManager *jwt.Manager,
 	rbacMiddleware *middleware.RBACMiddleware,
 	allowedOrigins []string,
@@ -146,6 +147,33 @@ func SetupRoutes(
 			// Doctor schedule routes
 			protected.GET("/doctors/:id/schedule", rbacMiddleware.RequirePermission("appointments.view"), appointmentHandler.GetDoctorSchedule)
 			protected.GET("/doctors/:id/available-slots", rbacMiddleware.RequirePermission("appointments.view"), appointmentHandler.GetAvailableTimeSlots)
+
+			// Visit routes
+			visits := protected.Group("/visits")
+			{
+				// List and search
+				visits.GET("", rbacMiddleware.RequirePermission("visits.view"), visitHandler.ListVisits)
+				visits.GET("/code/:code", rbacMiddleware.RequirePermission("visits.view"), visitHandler.GetVisitByCode)
+
+				// Create
+				visits.POST("", rbacMiddleware.RequirePermission("visits.create"), visitHandler.CreateVisit)
+
+				// Get details
+				visits.GET("/:id", rbacMiddleware.RequirePermission("visits.view"), visitHandler.GetVisit)
+
+				// Update
+				visits.PUT("/:id", rbacMiddleware.RequirePermission("visits.update"), visitHandler.UpdateVisit)
+
+				// Status transitions
+				visits.POST("/:id/complete", rbacMiddleware.RequirePermission("visits.complete"), visitHandler.CompleteVisit)
+				visits.POST("/:id/cancel", rbacMiddleware.RequirePermission("visits.delete"), visitHandler.CancelVisit)
+			}
+
+			// Patient visits sub-routes
+			protected.GET("/patients/:id/visits", rbacMiddleware.RequirePermission("visits.view"), visitHandler.GetPatientVisits)
+
+			// Doctor visits routes
+			protected.GET("/doctors/:id/visits", rbacMiddleware.RequirePermission("visits.view"), visitHandler.GetDoctorVisits)
 		}
 	}
 }
