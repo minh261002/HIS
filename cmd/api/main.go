@@ -56,16 +56,22 @@ func main() {
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(db)
 	patientRepo := repository.NewPatientRepository(db)
+	allergyRepo := repository.NewPatientAllergyRepository(db)
+	historyRepo := repository.NewPatientMedicalHistoryRepository(db)
 
 	// Initialize services
 	authService := service.NewAuthService(userRepo, jwtManager)
 	userService := service.NewUserService(userRepo, db)
 	patientService := service.NewPatientService(patientRepo)
+	allergyService := service.NewPatientAllergyService(allergyRepo, patientRepo)
+	historyService := service.NewPatientMedicalHistoryService(historyRepo, patientRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
 	patientHandler := handler.NewPatientHandler(patientService)
+	allergyHandler := handler.NewPatientAllergyHandler(allergyService)
+	historyHandler := handler.NewPatientMedicalHistoryHandler(historyService)
 
 	// Initialize middleware
 	rbacMiddleware := middleware.NewRBACMiddleware(userRepo)
@@ -77,7 +83,7 @@ func main() {
 	router := gin.New()
 
 	// Setup routes
-	handler.SetupRoutes(router, authHandler, userHandler, patientHandler, jwtManager, rbacMiddleware, cfg.Server.AllowedOrigins)
+	handler.SetupRoutes(router, authHandler, userHandler, patientHandler, allergyHandler, historyHandler, jwtManager, rbacMiddleware, cfg.Server.AllowedOrigins)
 
 	// Create HTTP server
 	srv := &http.Server{

@@ -13,6 +13,8 @@ func SetupRoutes(
 	authHandler *AuthHandler,
 	userHandler *UserHandler,
 	patientHandler *PatientHandler,
+	allergyHandler *PatientAllergyHandler,
+	historyHandler *PatientMedicalHistoryHandler,
 	jwtManager *jwt.Manager,
 	rbacMiddleware *middleware.RBACMiddleware,
 	allowedOrigins []string,
@@ -84,6 +86,32 @@ func SetupRoutes(
 
 				// Delete patient (requires delete permission - admin only)
 				patients.DELETE("/:id", rbacMiddleware.RequirePermission("patients.delete"), patientHandler.DeletePatient)
+
+				// Patient allergies sub-routes
+				patients.POST("/:id/allergies", rbacMiddleware.RequirePermission("patients.create"), allergyHandler.AddAllergy)
+				patients.GET("/:id/allergies", rbacMiddleware.RequirePermission("patients.view"), allergyHandler.GetPatientAllergies)
+				patients.GET("/:id/allergies/active", rbacMiddleware.RequirePermission("patients.view"), allergyHandler.GetActiveAllergies)
+
+				// Patient medical history sub-routes
+				patients.POST("/:id/medical-history", rbacMiddleware.RequirePermission("patients.create"), historyHandler.AddMedicalHistory)
+				patients.GET("/:id/medical-history", rbacMiddleware.RequirePermission("patients.view"), historyHandler.GetPatientHistory)
+				patients.GET("/:id/medical-history/active", rbacMiddleware.RequirePermission("patients.view"), historyHandler.GetActiveConditions)
+			}
+
+			// Allergy routes (standalone)
+			allergies := protected.Group("/allergies")
+			{
+				allergies.GET("/:allergyId", rbacMiddleware.RequirePermission("patients.view"), allergyHandler.GetAllergy)
+				allergies.PUT("/:allergyId", rbacMiddleware.RequirePermission("patients.update"), allergyHandler.UpdateAllergy)
+				allergies.DELETE("/:allergyId", rbacMiddleware.RequirePermission("patients.delete"), allergyHandler.DeleteAllergy)
+			}
+
+			// Medical history routes (standalone)
+			medicalHistory := protected.Group("/medical-history")
+			{
+				medicalHistory.GET("/:historyId", rbacMiddleware.RequirePermission("patients.view"), historyHandler.GetMedicalHistory)
+				medicalHistory.PUT("/:historyId", rbacMiddleware.RequirePermission("patients.update"), historyHandler.UpdateMedicalHistory)
+				medicalHistory.DELETE("/:historyId", rbacMiddleware.RequirePermission("patients.delete"), historyHandler.DeleteMedicalHistory)
 			}
 		}
 	}
