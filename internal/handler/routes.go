@@ -15,6 +15,7 @@ func SetupRoutes(
 	patientHandler *PatientHandler,
 	allergyHandler *PatientAllergyHandler,
 	historyHandler *PatientMedicalHistoryHandler,
+	appointmentHandler *AppointmentHandler,
 	jwtManager *jwt.Manager,
 	rbacMiddleware *middleware.RBACMiddleware,
 	allowedOrigins []string,
@@ -113,6 +114,38 @@ func SetupRoutes(
 				medicalHistory.PUT("/:historyId", rbacMiddleware.RequirePermission("patients.update"), historyHandler.UpdateMedicalHistory)
 				medicalHistory.DELETE("/:historyId", rbacMiddleware.RequirePermission("patients.delete"), historyHandler.DeleteMedicalHistory)
 			}
+
+			// Appointment routes
+			appointments := protected.Group("/appointments")
+			{
+				// List and search
+				appointments.GET("", rbacMiddleware.RequirePermission("appointments.view"), appointmentHandler.ListAppointments)
+				appointments.GET("/upcoming", rbacMiddleware.RequirePermission("appointments.view"), appointmentHandler.GetUpcomingAppointments)
+				appointments.GET("/code/:code", rbacMiddleware.RequirePermission("appointments.view"), appointmentHandler.GetAppointmentByCode)
+
+				// Create
+				appointments.POST("", rbacMiddleware.RequirePermission("appointments.create"), appointmentHandler.ScheduleAppointment)
+
+				// Get details
+				appointments.GET("/:id", rbacMiddleware.RequirePermission("appointments.view"), appointmentHandler.GetAppointment)
+
+				// Update/Reschedule
+				appointments.PUT("/:id", rbacMiddleware.RequirePermission("appointments.update"), appointmentHandler.RescheduleAppointment)
+
+				// Status transitions
+				appointments.POST("/:id/cancel", rbacMiddleware.RequirePermission("appointments.cancel"), appointmentHandler.CancelAppointment)
+				appointments.POST("/:id/confirm", rbacMiddleware.RequirePermission("appointments.manage"), appointmentHandler.ConfirmAppointment)
+				appointments.POST("/:id/start", rbacMiddleware.RequirePermission("appointments.manage"), appointmentHandler.StartAppointment)
+				appointments.POST("/:id/complete", rbacMiddleware.RequirePermission("appointments.manage"), appointmentHandler.CompleteAppointment)
+				appointments.POST("/:id/no-show", rbacMiddleware.RequirePermission("appointments.manage"), appointmentHandler.MarkNoShow)
+			}
+
+			// Patient appointments sub-routes
+			protected.GET("/patients/:id/appointments", rbacMiddleware.RequirePermission("appointments.view"), appointmentHandler.GetPatientAppointments)
+
+			// Doctor schedule routes
+			protected.GET("/doctors/:id/schedule", rbacMiddleware.RequirePermission("appointments.view"), appointmentHandler.GetDoctorSchedule)
+			protected.GET("/doctors/:id/available-slots", rbacMiddleware.RequirePermission("appointments.view"), appointmentHandler.GetAvailableTimeSlots)
 		}
 	}
 }
