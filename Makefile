@@ -32,11 +32,11 @@ docker-down: ## Stop Docker services
 
 migrate-up: ## Run database migrations up
 	@echo "Running migrations..."
-	@migrate -path migrations -database "mysql://his_user:his_password@tcp(localhost:3306)/hospital_db" up
+	@migrate -path migrations -database "mysql://his_user:his_password@tcp(localhost:13306)/hospital_db" up
 
 migrate-down: ## Rollback database migrations
 	@echo "Rolling back migrations..."
-	@migrate -path migrations -database "mysql://his_user:his_password@tcp(localhost:3306)/hospital_db" down
+	@migrate -path migrations -database "mysql://his_user:his_password@tcp(localhost:13306)/hospital_db" down
 
 migrate-create: ## Create a new migration (usage: make migrate-create name=migration_name)
 	@echo "Creating migration: $(name)"
