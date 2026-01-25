@@ -70,10 +70,14 @@ type Patient struct {
 	EmergencyContactPhone        string `gorm:"size:20" json:"emergency_contact_phone"`
 	EmergencyContactRelationship string `gorm:"size:50" json:"emergency_contact_relationship"`
 
-	// Medical Information
-	Allergies         string `gorm:"type:text" json:"allergies"`          // JSON or comma-separated
-	ChronicConditions string `gorm:"type:text" json:"chronic_conditions"` // JSON or comma-separated
+	// Medical Information (deprecated - use relationships below)
+	Allergies         string `gorm:"type:text" json:"allergies,omitempty"`          // Deprecated: Use AllergiesRecords
+	ChronicConditions string `gorm:"type:text" json:"chronic_conditions,omitempty"` // Deprecated: Use MedicalHistoryRecords
 	Notes             string `gorm:"type:text" json:"notes"`
+
+	// Relationships
+	AllergiesRecords      []*PatientAllergy        `gorm:"foreignKey:PatientID" json:"allergies_records,omitempty"`
+	MedicalHistoryRecords []*PatientMedicalHistory `gorm:"foreignKey:PatientID" json:"medical_history_records,omitempty"`
 
 	// Status
 	IsActive bool `gorm:"default:true" json:"is_active"`
