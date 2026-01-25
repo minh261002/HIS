@@ -60,6 +60,8 @@ func main() {
 	historyRepo := repository.NewPatientMedicalHistoryRepository(db)
 	appointmentRepo := repository.NewAppointmentRepository(db)
 	visitRepo := repository.NewVisitRepository(db)
+	icd10Repo := repository.NewICD10CodeRepository(db)
+	diagnosisRepo := repository.NewDiagnosisRepository(db)
 
 	// Initialize services
 	authService := service.NewAuthService(userRepo, jwtManager)
@@ -69,6 +71,8 @@ func main() {
 	historyService := service.NewPatientMedicalHistoryService(historyRepo, patientRepo)
 	appointmentService := service.NewAppointmentService(appointmentRepo, patientRepo, userRepo)
 	visitService := service.NewVisitService(visitRepo, patientRepo, userRepo, appointmentRepo)
+	icd10Service := service.NewICD10CodeService(icd10Repo)
+	diagnosisService := service.NewDiagnosisService(diagnosisRepo, icd10Repo, visitRepo, patientRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
@@ -78,6 +82,8 @@ func main() {
 	historyHandler := handler.NewPatientMedicalHistoryHandler(historyService)
 	appointmentHandler := handler.NewAppointmentHandler(appointmentService)
 	visitHandler := handler.NewVisitHandler(visitService)
+	icd10Handler := handler.NewICD10CodeHandler(icd10Service)
+	diagnosisHandler := handler.NewDiagnosisHandler(diagnosisService)
 
 	// Initialize middleware
 	rbacMiddleware := middleware.NewRBACMiddleware(userRepo)
@@ -89,7 +95,7 @@ func main() {
 	router := gin.New()
 
 	// Setup routes
-	handler.SetupRoutes(router, authHandler, userHandler, patientHandler, allergyHandler, historyHandler, appointmentHandler, visitHandler, jwtManager, rbacMiddleware, cfg.Server.AllowedOrigins)
+	handler.SetupRoutes(router, authHandler, userHandler, patientHandler, allergyHandler, historyHandler, appointmentHandler, visitHandler, icd10Handler, diagnosisHandler, jwtManager, rbacMiddleware, cfg.Server.AllowedOrigins)
 
 	// Create HTTP server
 	srv := &http.Server{

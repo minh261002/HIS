@@ -17,6 +17,8 @@ func SetupRoutes(
 	historyHandler *PatientMedicalHistoryHandler,
 	appointmentHandler *AppointmentHandler,
 	visitHandler *VisitHandler,
+	icd10Handler *ICD10CodeHandler,
+	diagnosisHandler *DiagnosisHandler,
 	jwtManager *jwt.Manager,
 	rbacMiddleware *middleware.RBACMiddleware,
 	allowedOrigins []string,
@@ -174,6 +176,27 @@ func SetupRoutes(
 
 			// Doctor visits routes
 			protected.GET("/doctors/:id/visits", rbacMiddleware.RequirePermission("visits.view"), visitHandler.GetDoctorVisits)
+
+			// ICD-10 code routes
+			icd10 := protected.Group("/icd10-codes")
+			{
+				icd10.GET("/search", rbacMiddleware.RequirePermission("diagnoses.view"), icd10Handler.SearchICD10Codes)
+				icd10.GET("/:code", rbacMiddleware.RequirePermission("diagnoses.view"), icd10Handler.GetICD10CodeByCode)
+				icd10.GET("/category/:category", rbacMiddleware.RequirePermission("diagnoses.view"), icd10Handler.GetICD10CodesByCategory)
+			}
+
+			// Diagnosis routes
+			diagnoses := protected.Group("/diagnoses")
+			{
+				diagnoses.POST("", rbacMiddleware.RequirePermission("diagnoses.create"), diagnosisHandler.AddDiagnosis)
+				diagnoses.GET("/:id", rbacMiddleware.RequirePermission("diagnoses.view"), diagnosisHandler.GetDiagnosis)
+				diagnoses.PUT("/:id", rbacMiddleware.RequirePermission("diagnoses.update"), diagnosisHandler.UpdateDiagnosis)
+				diagnoses.DELETE("/:id", rbacMiddleware.RequirePermission("diagnoses.delete"), diagnosisHandler.DeleteDiagnosis)
+			}
+
+			// Visit/Patient diagnosis sub-routes
+			protected.GET("/visits/:id/diagnoses", rbacMiddleware.RequirePermission("diagnoses.view"), diagnosisHandler.GetVisitDiagnoses)
+			protected.GET("/patients/:id/diagnoses", rbacMiddleware.RequirePermission("diagnoses.view"), diagnosisHandler.GetPatientDiagnoses)
 		}
 	}
 }
