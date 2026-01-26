@@ -77,6 +77,9 @@ func main() {
 	nursingNoteRepo := repository.NewNursingNoteRepository(db)
 	inventoryRepo := repository.NewInventoryRepository(db)
 	dispensingRepo := repository.NewDispensingRepository(db)
+	invoiceRepo := repository.NewInvoiceRepository(db)
+	paymentRepo := repository.NewPaymentRepository(db)
+	insuranceClaimRepo := repository.NewInsuranceClaimRepository(db)
 
 	// Initialize services
 	authService := service.NewAuthService(userRepo, jwtManager)
@@ -98,6 +101,9 @@ func main() {
 	admissionService := service.NewAdmissionService(admissionRepo, bedAllocationRepo, bedRepo, visitRepo, nursingNoteRepo)
 	inventoryService := service.NewInventoryService(inventoryRepo)
 	dispensingService := service.NewDispensingService(dispensingRepo, inventoryRepo, prescriptionRepo, db)
+	invoiceService := service.NewInvoiceService(invoiceRepo)
+	paymentService := service.NewPaymentService(paymentRepo, invoiceRepo)
+	insuranceClaimService := service.NewInsuranceClaimService(insuranceClaimRepo, invoiceRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
@@ -119,6 +125,9 @@ func main() {
 	admissionHandler := handler.NewAdmissionHandler(admissionService)
 	inventoryHandler := handler.NewInventoryHandler(inventoryService)
 	dispensingHandler := handler.NewDispensingHandler(dispensingService)
+	invoiceHandler := handler.NewInvoiceHandler(invoiceService)
+	paymentHandler := handler.NewPaymentHandler(paymentService)
+	insuranceClaimHandler := handler.NewInsuranceClaimHandler(insuranceClaimService)
 
 	// Initialize middleware
 	rbacMiddleware := middleware.NewRBACMiddleware(userRepo)
@@ -130,7 +139,7 @@ func main() {
 	router := gin.New()
 
 	// Setup routes
-	handler.SetupRoutes(router, authHandler, userHandler, patientHandler, allergyHandler, historyHandler, appointmentHandler, visitHandler, icd10Handler, diagnosisHandler, medicationHandler, prescriptionHandler, labTestTemplateHandler, labTestRequestHandler, imagingTemplateHandler, imagingRequestHandler, bedHandler, admissionHandler, inventoryHandler, dispensingHandler, jwtManager, rbacMiddleware, cfg.Server.AllowedOrigins)
+	handler.SetupRoutes(router, authHandler, userHandler, patientHandler, allergyHandler, historyHandler, appointmentHandler, visitHandler, icd10Handler, diagnosisHandler, medicationHandler, prescriptionHandler, labTestTemplateHandler, labTestRequestHandler, imagingTemplateHandler, imagingRequestHandler, bedHandler, admissionHandler, inventoryHandler, dispensingHandler, invoiceHandler, paymentHandler, insuranceClaimHandler, jwtManager, rbacMiddleware, cfg.Server.AllowedOrigins)
 
 	// Create HTTP server
 	srv := &http.Server{

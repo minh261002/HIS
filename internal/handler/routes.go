@@ -29,6 +29,9 @@ func SetupRoutes(
 	admissionHandler *AdmissionHandler,
 	inventoryHandler *InventoryHandler,
 	dispensingHandler *DispensingHandler,
+	invoiceHandler *InvoiceHandler,
+	paymentHandler *PaymentHandler,
+	insuranceClaimHandler *InsuranceClaimHandler,
 	jwtManager *jwt.Manager,
 	rbacMiddleware *middleware.RBACMiddleware,
 	allowedOrigins []string,
@@ -322,6 +325,33 @@ func SetupRoutes(
 			// Prescription/Patient dispensing sub-routes
 			protected.GET("/prescriptions/:id/dispensing", rbacMiddleware.RequirePermission("dispensing.view"), dispensingHandler.GetPrescriptionDispensingRecords)
 			protected.GET("/patients/:id/dispensing", rbacMiddleware.RequirePermission("dispensing.view"), dispensingHandler.GetPatientDispensingHistory)
+
+			// Invoice routes
+			invoices := protected.Group("/invoices")
+			{
+				invoices.POST("", rbacMiddleware.RequirePermission("invoices.create"), invoiceHandler.CreateInvoice)
+				invoices.GET("/:id", rbacMiddleware.RequirePermission("invoices.view"), invoiceHandler.GetInvoice)
+				invoices.GET("/code/:code", rbacMiddleware.RequirePermission("invoices.view"), invoiceHandler.GetInvoiceByCode)
+			}
+
+			// Payment routes
+			payments := protected.Group("/payments")
+			{
+				payments.POST("", rbacMiddleware.RequirePermission("payments.process"), paymentHandler.CreatePayment)
+			}
+
+			// Insurance claim routes
+			insuranceClaims := protected.Group("/insurance-claims")
+			{
+				insuranceClaims.POST("", rbacMiddleware.RequirePermission("insurance_claims.manage"), insuranceClaimHandler.CreateInsuranceClaim)
+				insuranceClaims.POST("/:id/approve", rbacMiddleware.RequirePermission("insurance_claims.manage"), insuranceClaimHandler.ApproveClaim)
+				insuranceClaims.POST("/:id/reject", rbacMiddleware.RequirePermission("insurance_claims.manage"), insuranceClaimHandler.RejectClaim)
+			}
+
+			// Patient/Invoice sub-routes
+			protected.GET("/patients/:id/invoices", rbacMiddleware.RequirePermission("invoices.view"), invoiceHandler.GetPatientInvoices)
+			protected.GET("/invoices/:id/payments", rbacMiddleware.RequirePermission("payments.view"), paymentHandler.GetInvoicePayments)
+			protected.GET("/invoices/:id/insurance-claims", rbacMiddleware.RequirePermission("insurance_claims.view"), insuranceClaimHandler.GetInvoiceClaims)
 		}
 	}
 }
