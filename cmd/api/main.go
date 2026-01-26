@@ -71,6 +71,12 @@ func main() {
 	imagingTemplateRepo := repository.NewImagingTemplateRepository(db)
 	imagingRequestRepo := repository.NewImagingRequestRepository(db)
 	imagingResultRepo := repository.NewImagingResultRepository(db)
+	bedRepo := repository.NewBedRepository(db)
+	admissionRepo := repository.NewAdmissionRepository(db)
+	bedAllocationRepo := repository.NewBedAllocationRepository(db)
+	nursingNoteRepo := repository.NewNursingNoteRepository(db)
+	inventoryRepo := repository.NewInventoryRepository(db)
+	dispensingRepo := repository.NewDispensingRepository(db)
 
 	// Initialize services
 	authService := service.NewAuthService(userRepo, jwtManager)
@@ -88,6 +94,10 @@ func main() {
 	labTestRequestService := service.NewLabTestRequestService(labTestRequestRepo, labTestResultRepo, labTestTemplateRepo, visitRepo)
 	imagingTemplateService := service.NewImagingTemplateService(imagingTemplateRepo)
 	imagingRequestService := service.NewImagingRequestService(imagingRequestRepo, imagingResultRepo, imagingTemplateRepo, visitRepo)
+	bedService := service.NewBedService(bedRepo)
+	admissionService := service.NewAdmissionService(admissionRepo, bedAllocationRepo, bedRepo, visitRepo, nursingNoteRepo)
+	inventoryService := service.NewInventoryService(inventoryRepo)
+	dispensingService := service.NewDispensingService(dispensingRepo, inventoryRepo, prescriptionRepo, db)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
@@ -105,6 +115,10 @@ func main() {
 	labTestRequestHandler := handler.NewLabTestRequestHandler(labTestRequestService)
 	imagingTemplateHandler := handler.NewImagingTemplateHandler(imagingTemplateService)
 	imagingRequestHandler := handler.NewImagingRequestHandler(imagingRequestService)
+	bedHandler := handler.NewBedHandler(bedService)
+	admissionHandler := handler.NewAdmissionHandler(admissionService)
+	inventoryHandler := handler.NewInventoryHandler(inventoryService)
+	dispensingHandler := handler.NewDispensingHandler(dispensingService)
 
 	// Initialize middleware
 	rbacMiddleware := middleware.NewRBACMiddleware(userRepo)
@@ -116,7 +130,7 @@ func main() {
 	router := gin.New()
 
 	// Setup routes
-	handler.SetupRoutes(router, authHandler, userHandler, patientHandler, allergyHandler, historyHandler, appointmentHandler, visitHandler, icd10Handler, diagnosisHandler, medicationHandler, prescriptionHandler, labTestTemplateHandler, labTestRequestHandler, imagingTemplateHandler, imagingRequestHandler, jwtManager, rbacMiddleware, cfg.Server.AllowedOrigins)
+	handler.SetupRoutes(router, authHandler, userHandler, patientHandler, allergyHandler, historyHandler, appointmentHandler, visitHandler, icd10Handler, diagnosisHandler, medicationHandler, prescriptionHandler, labTestTemplateHandler, labTestRequestHandler, imagingTemplateHandler, imagingRequestHandler, bedHandler, admissionHandler, inventoryHandler, dispensingHandler, jwtManager, rbacMiddleware, cfg.Server.AllowedOrigins)
 
 	// Create HTTP server
 	srv := &http.Server{

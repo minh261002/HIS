@@ -25,6 +25,10 @@ func SetupRoutes(
 	labTestRequestHandler *LabTestRequestHandler,
 	imagingTemplateHandler *ImagingTemplateHandler,
 	imagingRequestHandler *ImagingRequestHandler,
+	bedHandler *BedHandler,
+	admissionHandler *AdmissionHandler,
+	inventoryHandler *InventoryHandler,
+	dispensingHandler *DispensingHandler,
 	jwtManager *jwt.Manager,
 	rbacMiddleware *middleware.RBACMiddleware,
 	allowedOrigins []string,
@@ -276,6 +280,48 @@ func SetupRoutes(
 			// Visit/Patient imaging sub-routes
 			protected.GET("/visits/:id/imaging-requests", rbacMiddleware.RequirePermission("imaging.view"), imagingRequestHandler.GetVisitImagingRequests)
 			protected.GET("/patients/:id/imaging-requests", rbacMiddleware.RequirePermission("imaging.view"), imagingRequestHandler.GetPatientImagingRequests)
+
+			// Bed routes
+			beds := protected.Group("/beds")
+			{
+				beds.GET("/available", rbacMiddleware.RequirePermission("beds.view"), bedHandler.GetAvailableBeds)
+				beds.GET("/:number", rbacMiddleware.RequirePermission("beds.view"), bedHandler.GetBedByNumber)
+			}
+
+			// Admission routes
+			admissions := protected.Group("/admissions")
+			{
+				admissions.POST("", rbacMiddleware.RequirePermission("admissions.create"), admissionHandler.CreateAdmission)
+				admissions.GET("/:id", rbacMiddleware.RequirePermission("admissions.view"), admissionHandler.GetAdmission)
+				admissions.GET("/code/:code", rbacMiddleware.RequirePermission("admissions.view"), admissionHandler.GetAdmissionByCode)
+				admissions.POST("/:id/discharge", rbacMiddleware.RequirePermission("admissions.discharge"), admissionHandler.DischargeAdmission)
+				admissions.POST("/:id/transfer-bed", rbacMiddleware.RequirePermission("beds.manage"), admissionHandler.TransferBed)
+				admissions.GET("/active", rbacMiddleware.RequirePermission("admissions.view"), admissionHandler.GetActiveAdmissions)
+				admissions.POST("/:id/nursing-notes", rbacMiddleware.RequirePermission("nursing_notes.create"), admissionHandler.CreateNursingNote)
+				admissions.GET("/:id/nursing-notes", rbacMiddleware.RequirePermission("nursing_notes.view"), admissionHandler.GetAdmissionNursingNotes)
+			}
+
+			// Patient admission history sub-route
+			protected.GET("/patients/:id/admissions", rbacMiddleware.RequirePermission("admissions.view"), admissionHandler.GetPatientAdmissions)
+
+			// Inventory routes
+			inventory := protected.Group("/inventory")
+			{
+				inventory.POST("", rbacMiddleware.RequirePermission("inventory.manage"), inventoryHandler.AddStock)
+				inventory.GET("/medication/:id", rbacMiddleware.RequirePermission("inventory.view"), inventoryHandler.GetMedicationStock)
+				inventory.GET("/low-stock", rbacMiddleware.RequirePermission("inventory.view"), inventoryHandler.GetLowStockAlerts)
+				inventory.GET("/expiring-soon", rbacMiddleware.RequirePermission("inventory.view"), inventoryHandler.GetExpiringSoonAlerts)
+			}
+
+			// Dispensing routes
+			dispensing := protected.Group("/dispensing")
+			{
+				dispensing.POST("", rbacMiddleware.RequirePermission("dispensing.dispense"), dispensingHandler.DispensePrescription)
+			}
+
+			// Prescription/Patient dispensing sub-routes
+			protected.GET("/prescriptions/:id/dispensing", rbacMiddleware.RequirePermission("dispensing.view"), dispensingHandler.GetPrescriptionDispensingRecords)
+			protected.GET("/patients/:id/dispensing", rbacMiddleware.RequirePermission("dispensing.view"), dispensingHandler.GetPatientDispensingHistory)
 		}
 	}
 }

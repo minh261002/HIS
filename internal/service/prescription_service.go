@@ -11,8 +11,7 @@ import (
 )
 
 var (
-	ErrPrescriptionNotFound = errors.New("prescription not found")
-	ErrMedicationNotFound   = errors.New("medication not found")
+	ErrMedicationNotFound = errors.New("medication not found")
 )
 
 // PrescriptionService handles prescription business logic

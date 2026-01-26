@@ -127,10 +127,9 @@ func (s *DispensingService) DispensePrescription(req *dto.DispensePrescriptionRe
 	// Reload to get relationships
 	responses := make([]*dto.DispensingResponse, len(dispensings))
 	for i, d := range dispensings {
-		reloaded, _ := s.db.Preload("Medication").Preload("Patient").Preload("Pharmacist").First(&domain.Dispensing{}, d.ID).Error
-		if reloaded == nil {
-			var dispensing domain.Dispensing
-			s.db.Preload("Medication").Preload("Patient").Preload("Pharmacist").First(&dispensing, d.ID)
+		var dispensing domain.Dispensing
+		err := s.db.Preload("Medication").Preload("Patient").Preload("Pharmacist").First(&dispensing, d.ID).Error
+		if err == nil {
 			responses[i] = s.toDispensingResponse(&dispensing)
 		}
 	}
