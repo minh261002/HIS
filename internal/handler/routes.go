@@ -21,6 +21,10 @@ func SetupRoutes(
 	diagnosisHandler *DiagnosisHandler,
 	medicationHandler *MedicationHandler,
 	prescriptionHandler *PrescriptionHandler,
+	labTestTemplateHandler *LabTestTemplateHandler,
+	labTestRequestHandler *LabTestRequestHandler,
+	imagingTemplateHandler *ImagingTemplateHandler,
+	imagingRequestHandler *ImagingRequestHandler,
 	jwtManager *jwt.Manager,
 	rbacMiddleware *middleware.RBACMiddleware,
 	allowedOrigins []string,
@@ -222,6 +226,56 @@ func SetupRoutes(
 			// Visit/Patient prescription sub-routes
 			protected.GET("/visits/:id/prescriptions", rbacMiddleware.RequirePermission("prescriptions.view"), prescriptionHandler.GetVisitPrescriptions)
 			protected.GET("/patients/:id/prescriptions", rbacMiddleware.RequirePermission("prescriptions.view"), prescriptionHandler.GetPatientPrescriptions)
+
+			// Lab test template routes
+			labTestTemplates := protected.Group("/lab-test-templates")
+			{
+				labTestTemplates.GET("/search", rbacMiddleware.RequirePermission("lab_tests.view"), labTestTemplateHandler.SearchTemplates)
+				labTestTemplates.GET("/:code", rbacMiddleware.RequirePermission("lab_tests.view"), labTestTemplateHandler.GetTemplateByCode)
+				labTestTemplates.GET("/category/:category", rbacMiddleware.RequirePermission("lab_tests.view"), labTestTemplateHandler.GetTemplatesByCategory)
+			}
+
+			// Lab test request routes
+			labTestRequests := protected.Group("/lab-test-requests")
+			{
+				labTestRequests.POST("", rbacMiddleware.RequirePermission("lab_tests.create"), labTestRequestHandler.CreateLabTestRequest)
+				labTestRequests.GET("/:id", rbacMiddleware.RequirePermission("lab_tests.view"), labTestRequestHandler.GetLabTestRequest)
+				labTestRequests.GET("/code/:code", rbacMiddleware.RequirePermission("lab_tests.view"), labTestRequestHandler.GetLabTestRequestByCode)
+				labTestRequests.POST("/:id/collect-sample", rbacMiddleware.RequirePermission("lab_tests.enter_results"), labTestRequestHandler.CollectSample)
+				labTestRequests.POST("/:id/start-processing", rbacMiddleware.RequirePermission("lab_tests.enter_results"), labTestRequestHandler.StartProcessing)
+				labTestRequests.POST("/:id/complete", rbacMiddleware.RequirePermission("lab_tests.enter_results"), labTestRequestHandler.CompleteTest)
+				labTestRequests.POST("/:id/cancel", rbacMiddleware.RequirePermission("lab_tests.delete"), labTestRequestHandler.CancelTest)
+				labTestRequests.POST("/:id/results", rbacMiddleware.RequirePermission("lab_tests.enter_results"), labTestRequestHandler.EnterResults)
+			}
+
+			// Visit/Patient lab test sub-routes
+			protected.GET("/visits/:id/lab-tests", rbacMiddleware.RequirePermission("lab_tests.view"), labTestRequestHandler.GetVisitLabTests)
+			protected.GET("/patients/:id/lab-tests", rbacMiddleware.RequirePermission("lab_tests.view"), labTestRequestHandler.GetPatientLabTests)
+
+			// Imaging template routes
+			imagingTemplates := protected.Group("/imaging-templates")
+			{
+				imagingTemplates.GET("/search", rbacMiddleware.RequirePermission("imaging.view"), imagingTemplateHandler.SearchTemplates)
+				imagingTemplates.GET("/:code", rbacMiddleware.RequirePermission("imaging.view"), imagingTemplateHandler.GetTemplateByCode)
+				imagingTemplates.GET("/modality/:modality", rbacMiddleware.RequirePermission("imaging.view"), imagingTemplateHandler.GetTemplatesByModality)
+			}
+
+			// Imaging request routes
+			imagingRequests := protected.Group("/imaging-requests")
+			{
+				imagingRequests.POST("", rbacMiddleware.RequirePermission("imaging.create"), imagingRequestHandler.CreateImagingRequest)
+				imagingRequests.GET("/:id", rbacMiddleware.RequirePermission("imaging.view"), imagingRequestHandler.GetImagingRequest)
+				imagingRequests.GET("/code/:code", rbacMiddleware.RequirePermission("imaging.view"), imagingRequestHandler.GetImagingRequestByCode)
+				imagingRequests.POST("/:id/schedule", rbacMiddleware.RequirePermission("imaging.update"), imagingRequestHandler.ScheduleImaging)
+				imagingRequests.POST("/:id/start", rbacMiddleware.RequirePermission("imaging.report"), imagingRequestHandler.StartImaging)
+				imagingRequests.POST("/:id/complete", rbacMiddleware.RequirePermission("imaging.report"), imagingRequestHandler.CompleteImaging)
+				imagingRequests.POST("/:id/cancel", rbacMiddleware.RequirePermission("imaging.delete"), imagingRequestHandler.CancelImaging)
+				imagingRequests.POST("/:id/result", rbacMiddleware.RequirePermission("imaging.report"), imagingRequestHandler.CreateOrUpdateResult)
+			}
+
+			// Visit/Patient imaging sub-routes
+			protected.GET("/visits/:id/imaging-requests", rbacMiddleware.RequirePermission("imaging.view"), imagingRequestHandler.GetVisitImagingRequests)
+			protected.GET("/patients/:id/imaging-requests", rbacMiddleware.RequirePermission("imaging.view"), imagingRequestHandler.GetPatientImagingRequests)
 		}
 	}
 }
