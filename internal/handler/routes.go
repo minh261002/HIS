@@ -19,6 +19,8 @@ func SetupRoutes(
 	visitHandler *VisitHandler,
 	icd10Handler *ICD10CodeHandler,
 	diagnosisHandler *DiagnosisHandler,
+	medicationHandler *MedicationHandler,
+	prescriptionHandler *PrescriptionHandler,
 	jwtManager *jwt.Manager,
 	rbacMiddleware *middleware.RBACMiddleware,
 	allowedOrigins []string,
@@ -197,6 +199,29 @@ func SetupRoutes(
 			// Visit/Patient diagnosis sub-routes
 			protected.GET("/visits/:id/diagnoses", rbacMiddleware.RequirePermission("diagnoses.view"), diagnosisHandler.GetVisitDiagnoses)
 			protected.GET("/patients/:id/diagnoses", rbacMiddleware.RequirePermission("diagnoses.view"), diagnosisHandler.GetPatientDiagnoses)
+
+			// Medication routes
+			medications := protected.Group("/medications")
+			{
+				medications.GET("/search", rbacMiddleware.RequirePermission("prescriptions.view"), medicationHandler.SearchMedications)
+				medications.GET("/:id", rbacMiddleware.RequirePermission("prescriptions.view"), medicationHandler.GetMedication)
+			}
+
+			// Prescription routes
+			prescriptions := protected.Group("/prescriptions")
+			{
+				prescriptions.POST("", rbacMiddleware.RequirePermission("prescriptions.create"), prescriptionHandler.CreatePrescription)
+				prescriptions.GET("/:id", rbacMiddleware.RequirePermission("prescriptions.view"), prescriptionHandler.GetPrescription)
+				prescriptions.GET("/code/:code", rbacMiddleware.RequirePermission("prescriptions.view"), prescriptionHandler.GetPrescriptionByCode)
+				prescriptions.PUT("/:id", rbacMiddleware.RequirePermission("prescriptions.update"), prescriptionHandler.UpdatePrescription)
+				prescriptions.POST("/:id/dispense", rbacMiddleware.RequirePermission("prescriptions.dispense"), prescriptionHandler.DispensePrescription)
+				prescriptions.POST("/:id/complete", rbacMiddleware.RequirePermission("prescriptions.dispense"), prescriptionHandler.CompletePrescription)
+				prescriptions.POST("/:id/cancel", rbacMiddleware.RequirePermission("prescriptions.delete"), prescriptionHandler.CancelPrescription)
+			}
+
+			// Visit/Patient prescription sub-routes
+			protected.GET("/visits/:id/prescriptions", rbacMiddleware.RequirePermission("prescriptions.view"), prescriptionHandler.GetVisitPrescriptions)
+			protected.GET("/patients/:id/prescriptions", rbacMiddleware.RequirePermission("prescriptions.view"), prescriptionHandler.GetPatientPrescriptions)
 		}
 	}
 }
