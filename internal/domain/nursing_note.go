@@ -1,39 +1,10 @@
 package domain
 
 import (
-	"database/sql/driver"
-	"encoding/json"
 	"time"
 
 	"gorm.io/gorm"
 )
-
-// VitalSigns represents patient vital signs
-type VitalSigns struct {
-	Temperature     float64 `json:"temperature"`      // Celsius
-	BloodPressure   string  `json:"blood_pressure"`   // e.g., "120/80"
-	Pulse           int     `json:"pulse"`            // beats per minute
-	RespiratoryRate int     `json:"respiratory_rate"` // breaths per minute
-	OxygenSat       int     `json:"oxygen_sat"`       // percentage
-}
-
-// Scan implements the sql.Scanner interface
-func (v *VitalSigns) Scan(value interface{}) error {
-	if value == nil {
-		*v = VitalSigns{}
-		return nil
-	}
-	bytes, ok := value.([]byte)
-	if !ok {
-		return nil
-	}
-	return json.Unmarshal(bytes, v)
-}
-
-// Value implements the driver.Valuer interface
-func (v VitalSigns) Value() (driver.Value, error) {
-	return json.Marshal(v)
-}
 
 // NursingNote represents a nursing note
 type NursingNote struct {
