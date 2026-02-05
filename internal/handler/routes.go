@@ -32,6 +32,9 @@ func SetupRoutes(
 	invoiceHandler *InvoiceHandler,
 	paymentHandler *PaymentHandler,
 	insuranceClaimHandler *InsuranceClaimHandler,
+	departmentHandler *DepartmentHandler,
+	medicalServiceHandler *MedicalServiceHandler,
+	auditLogHandler *AuditLogHandler,
 	jwtManager *jwt.Manager,
 	rbacMiddleware *middleware.RBACMiddleware,
 	allowedOrigins []string,
@@ -352,6 +355,35 @@ func SetupRoutes(
 			protected.GET("/patients/:id/invoices", rbacMiddleware.RequirePermission("invoices.view"), invoiceHandler.GetPatientInvoices)
 			protected.GET("/invoices/:id/payments", rbacMiddleware.RequirePermission("payments.view"), paymentHandler.GetInvoicePayments)
 			protected.GET("/invoices/:id/insurance-claims", rbacMiddleware.RequirePermission("insurance_claims.view"), insuranceClaimHandler.GetInvoiceClaims)
+
+			// System Module Routes
+			system := protected.Group("/system")
+			{
+				// Departments
+				depts := system.Group("/departments")
+				{
+					depts.POST("", rbacMiddleware.RequirePermission("departments.create"), departmentHandler.CreateDepartment)
+					depts.GET("", rbacMiddleware.RequirePermission("departments.view"), departmentHandler.ListDepartments)
+					depts.GET("/:id", rbacMiddleware.RequirePermission("departments.view"), departmentHandler.GetDepartment)
+					depts.PUT("/:id", rbacMiddleware.RequirePermission("departments.update"), departmentHandler.UpdateDepartment)
+					depts.DELETE("/:id", rbacMiddleware.RequirePermission("departments.delete"), departmentHandler.DeleteDepartment)
+				}
+
+				// Services
+				services := system.Group("/services")
+				{
+					services.POST("", rbacMiddleware.RequirePermission("services.create"), medicalServiceHandler.CreateService)
+					services.GET("", rbacMiddleware.RequirePermission("services.view"), medicalServiceHandler.ListServices)
+					services.GET("/:id", rbacMiddleware.RequirePermission("services.view"), medicalServiceHandler.GetService)
+					services.PUT("/:id", rbacMiddleware.RequirePermission("services.update"), medicalServiceHandler.UpdateService)
+				}
+
+				// Audit Logs
+				audit := system.Group("/audit-logs")
+				{
+					audit.GET("", rbacMiddleware.RequirePermission("audit.view"), auditLogHandler.ListLogs)
+				}
+			}
 		}
 	}
 }

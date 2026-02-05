@@ -17,13 +17,15 @@ type BaseModel struct {
 // User represents a user in the system
 type User struct {
 	BaseModel
-	Username     string  `gorm:"uniqueIndex;size:50;not null" json:"username"`
-	Email        string  `gorm:"uniqueIndex;size:100;not null" json:"email"`
-	PasswordHash string  `gorm:"size:255;not null" json:"-"`
-	FullName     string  `gorm:"size:100" json:"full_name"`
-	PhoneNumber  string  `gorm:"size:20" json:"phone_number"`
-	IsActive     bool    `gorm:"default:true" json:"is_active"`
-	Roles        []*Role `gorm:"many2many:user_roles;" json:"roles,omitempty"`
+	Username     string      `gorm:"uniqueIndex;size:50;not null" json:"username"`
+	Email        string      `gorm:"uniqueIndex;size:100;not null" json:"email"`
+	PasswordHash string      `gorm:"size:255;not null" json:"-"`
+	FullName     string      `gorm:"size:100" json:"full_name"`
+	PhoneNumber  string      `gorm:"size:20" json:"phone_number"`
+	IsActive     bool        `gorm:"default:true" json:"is_active"`
+	DepartmentID *uint       `json:"department_id,omitempty"`
+	Department   *Department `gorm:"foreignKey:DepartmentID" json:"department,omitempty"`
+	Roles        []*Role     `gorm:"many2many:user_roles;" json:"roles,omitempty"`
 }
 
 // TableName specifies the table name for User model

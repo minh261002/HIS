@@ -6,16 +6,16 @@ import (
 	"gorm.io/gorm"
 )
 
-// Department represents hospital department
-type Department string
+// DepartmentType represents hospital department type
+type DepartmentType string
 
 const (
-	DepartmentInternalMedicine Department = "INTERNAL_MEDICINE"
-	DepartmentSurgery          Department = "SURGERY"
-	DepartmentPediatrics       Department = "PEDIATRICS"
-	DepartmentICU              Department = "ICU"
-	DepartmentObstetrics       Department = "OBSTETRICS"
-	DepartmentEmergency        Department = "EMERGENCY"
+	DepartmentInternalMedicine DepartmentType = "INTERNAL_MEDICINE"
+	DepartmentSurgery          DepartmentType = "SURGERY"
+	DepartmentPediatrics       DepartmentType = "PEDIATRICS"
+	DepartmentICU              DepartmentType = "ICU"
+	DepartmentObstetrics       DepartmentType = "OBSTETRICS"
+	DepartmentEmergency        DepartmentType = "EMERGENCY"
 )
 
 // BedType represents the type of bed
@@ -46,12 +46,12 @@ type Bed struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Bed Information
-	BedNumber  string     `gorm:"uniqueIndex;size:20;not null" json:"bed_number"`
-	Department Department `gorm:"size:30;not null;index" json:"department"`
-	Ward       string     `gorm:"size:50;not null" json:"ward"`
-	BedType    BedType    `gorm:"size:20;not null;index" json:"bed_type"`
-	Status     BedStatus  `gorm:"size:20;not null;index;default:'AVAILABLE'" json:"status"`
-	IsActive   bool       `gorm:"default:true;index" json:"is_active"`
+	BedNumber  string         `gorm:"uniqueIndex;size:20;not null" json:"bed_number"`
+	Department DepartmentType `gorm:"size:30;not null;index" json:"department"`
+	Ward       string         `gorm:"size:50;not null" json:"ward"`
+	BedType    BedType        `gorm:"size:20;not null;index" json:"bed_type"`
+	Status     BedStatus      `gorm:"size:20;not null;index;default:'AVAILABLE'" json:"status"`
+	IsActive   bool           `gorm:"default:true;index" json:"is_active"`
 }
 
 // TableName specifies the table name for Bed model
