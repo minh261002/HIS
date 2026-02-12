@@ -1,0 +1,2779 @@
+openapi: 3.0.3
+info:
+  title: HIS API
+  description: Hospital Information System REST API. Protected routes require `Authorization: Bearer <access_token>` and appropriate RBAC permissions.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token from POST /api/v1/auth/login
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        data: {}
+      required: [success]
+
+    ApiError:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: object }
+
+    Pagination:
+      type: object
+      properties:
+        page: { type: integer }
+        page_size: { type: integer }
+        total_items: { type: integer }
+        total_pages: { type: integer }
+
+    PaginatedResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            pagination: { $ref: '#/components/schemas/Pagination' }
+
+    # Auth
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token: { type: string }
+
+    UserResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        username: { type: string }
+        email: { type: string }
+        full_name: { type: string }
+        phone_number: { type: string }
+        is_active: { type: boolean }
+
+    AuthResponseData:
+      type: object
+      properties:
+        user: { $ref: '#/components/schemas/UserResponse' }
+        access_token: { type: string }
+        refresh_token: { type: string }
+        expires_in: { type: integer }
+
+    # Users
+    CreateUserRequest:
+      type: object
+      required: [username, email, password, full_name, role_ids]
+      properties:
+        username: { type: string, minLength: 3, maxLength: 50 }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        full_name: { type: string, minLength: 2, maxLength: 100 }
+        phone_number: { type: string, maxLength: 20 }
+        role_ids: { type: array, items: { type: integer }, minItems: 1 }
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        full_name: { type: string }
+        phone_number: { type: string }
+        is_active: { type: boolean }
+
+    AssignRolesRequest:
+      type: object
+      required: [role_ids]
+      properties:
+        role_ids: { type: array, items: { type: integer }, minItems: 1 }
+
+    # Patients
+    CreatePatientRequest:
+      type: object
+      required: [first_name, last_name, date_of_birth, gender, phone_number]
+      properties:
+        first_name: { type: string, minLength: 2, maxLength: 50 }
+        last_name: { type: string, minLength: 2, maxLength: 50 }
+        date_of_birth: { type: string, format: date }
+        gender: { type: string, enum: [MALE, FEMALE, OTHER] }
+        blood_type: { type: string, enum: [A+, A-, B+, B-, AB+, AB-, O+, O-] }
+        phone_number: { type: string }
+        email: { type: string, format: email }
+        address: { type: string }
+        city: { type: string }
+        state: { type: string }
+        postal_code: { type: string }
+        country: { type: string }
+        national_id: { type: string }
+        insurance_number: { type: string }
+        insurance_provider: { type: string }
+        emergency_contact_name: { type: string }
+        emergency_contact_phone: { type: string }
+        emergency_contact_relationship: { type: string }
+        allergies: { type: string }
+        chronic_conditions: { type: string }
+        notes: { type: string }
+
+    UpdatePatientRequest:
+      type: object
+      properties:
+        first_name: { type: string }
+        last_name: { type: string }
+        date_of_birth: { type: string, format: date }
+        gender: { type: string, enum: [MALE, FEMALE, OTHER] }
+        blood_type: { type: string, enum: [A+, A-, B+, B-, AB+, AB-, O+, O-] }
+        phone_number: { type: string }
+        email: { type: string }
+        address: { type: string }
+        city: { type: string }
+        state: { type: string }
+        postal_code: { type: string }
+        country: { type: string }
+        national_id: { type: string }
+        insurance_number: { type: string }
+        insurance_provider: { type: string }
+        emergency_contact_name: { type: string }
+        emergency_contact_phone: { type: string }
+        emergency_contact_relationship: { type: string }
+        allergies: { type: string }
+        chronic_conditions: { type: string }
+        notes: { type: string }
+        is_active: { type: boolean }
+
+    PatientResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        patient_code: { type: string }
+        first_name: { type: string }
+        last_name: { type: string }
+        full_name: { type: string }
+        date_of_birth: { type: string }
+        age: { type: integer }
+        gender: { type: string }
+        blood_type: { type: string }
+        phone_number: { type: string }
+        email: { type: string }
+        address: { type: string }
+        city: { type: string }
+        state: { type: string }
+        postal_code: { type: string }
+        country: { type: string }
+        national_id: { type: string }
+        insurance_number: { type: string }
+        insurance_provider: { type: string }
+        emergency_contact_name: { type: string }
+        emergency_contact_phone: { type: string }
+        emergency_contact_relationship: { type: string }
+        allergies: { type: string }
+        chronic_conditions: { type: string }
+        notes: { type: string }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    PatientListItem:
+      type: object
+      properties:
+        id: { type: integer }
+        patient_code: { type: string }
+        full_name: { type: string }
+        age: { type: integer }
+        gender: { type: string }
+        phone_number: { type: string }
+        city: { type: string }
+        is_active: { type: boolean }
+        created_at: { type: string }
+
+    # Appointments
+    CreateAppointmentRequest:
+      type: object
+      required: [patient_id, doctor_id, appointment_date, appointment_time, appointment_type, reason]
+      properties:
+        patient_id: { type: integer }
+        doctor_id: { type: integer }
+        appointment_date: { type: string, format: date }
+        appointment_time: { type: string }
+        duration_minutes: { type: integer, enum: [15, 30, 45, 60] }
+        appointment_type: { type: string, enum: [CONSULTATION, FOLLOW_UP, EMERGENCY, CHECKUP] }
+        reason: { type: string, minLength: 5 }
+        notes: { type: string }
+
+    UpdateAppointmentRequest:
+      type: object
+      properties:
+        appointment_date: { type: string, format: date }
+        appointment_time: { type: string }
+        duration_minutes: { type: integer, enum: [15, 30, 45, 60] }
+        reason: { type: string }
+        notes: { type: string }
+
+    CancelAppointmentRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 5 }
+
+    # Visits
+    VitalSignsRequest:
+      type: object
+      properties:
+        temperature: { type: number }
+        blood_pressure_systolic: { type: integer }
+        blood_pressure_diastolic: { type: integer }
+        heart_rate: { type: integer }
+        respiratory_rate: { type: integer }
+        oxygen_saturation: { type: integer }
+        weight: { type: number }
+        height: { type: number }
+
+    CreateVisitRequest:
+      type: object
+      required: [patient_id, doctor_id, visit_type, chief_complaint]
+      properties:
+        appointment_id: { type: integer }
+        patient_id: { type: integer }
+        doctor_id: { type: integer }
+        visit_type: { type: string, enum: [SCHEDULED, WALK_IN, EMERGENCY, FOLLOW_UP] }
+        chief_complaint: { type: string, minLength: 5 }
+        vital_signs: { $ref: '#/components/schemas/VitalSignsRequest' }
+
+    UpdateVisitRequest:
+      type: object
+      properties:
+        symptoms: { type: string }
+        physical_examination: { type: string }
+        clinical_notes: { type: string }
+        treatment_plan: { type: string }
+        follow_up_instructions: { type: string }
+        next_visit_date: { type: string, format: date }
+        vital_signs: { $ref: '#/components/schemas/VitalSignsRequest' }
+
+    # Diagnoses
+    CreateDiagnosisRequest:
+      type: object
+      required: [visit_id, icd10_code_id, diagnosis_type, diagnosis_status]
+      properties:
+        visit_id: { type: integer }
+        icd10_code_id: { type: integer }
+        diagnosis_type: { type: string, enum: [PRIMARY, SECONDARY, DIFFERENTIAL, COMPLICATION] }
+        diagnosis_status: { type: string, enum: [PROVISIONAL, CONFIRMED, RULED_OUT] }
+        clinical_notes: { type: string }
+
+    # Prescriptions
+    PrescriptionItemRequest:
+      type: object
+      required: [medication_id, quantity, dosage, frequency, duration_days]
+      properties:
+        medication_id: { type: integer }
+        quantity: { type: integer, minimum: 1 }
+        dosage: { type: string }
+        frequency: { type: string }
+        duration_days: { type: integer, minimum: 1 }
+        instructions: { type: string }
+
+    CreatePrescriptionRequest:
+      type: object
+      required: [visit_id, items]
+      properties:
+        visit_id: { type: integer }
+        diagnosis_id: { type: integer }
+        notes: { type: string }
+        items: { type: array, items: { $ref: '#/components/schemas/PrescriptionItemRequest' }, minItems: 1 }
+
+    # Invoices
+    InvoiceItemRequest:
+      type: object
+      required: [item_type, description, quantity, unit_price]
+      properties:
+        item_type: { type: string }
+        item_id: { type: integer }
+        description: { type: string }
+        quantity: { type: integer, minimum: 1 }
+        unit_price: { type: number, minimum: 0 }
+
+    CreateInvoiceRequest:
+      type: object
+      required: [patient_id, items]
+      properties:
+        visit_id: { type: integer }
+        patient_id: { type: integer }
+        items: { type: array, items: { $ref: '#/components/schemas/InvoiceItemRequest' }, minItems: 1 }
+        tax_amount: { type: number }
+        discount_amount: { type: number }
+        notes: { type: string }
+
+    # Payments
+    CreatePaymentRequest:
+      type: object
+      required: [invoice_id, payment_method, amount]
+      properties:
+        invoice_id: { type: integer }
+        payment_method: { type: string }
+        amount: { type: number, minimum: 0 }
+        notes: { type: string }
+
+    # Insurance
+    CreateInsuranceClaimRequest:
+      type: object
+      required: [invoice_id, insurance_provider, policy_number, claim_amount]
+      properties:
+        invoice_id: { type: integer }
+        insurance_provider: { type: string }
+        policy_number: { type: string }
+        claim_amount: { type: number, minimum: 0 }
+        notes: { type: string }
+
+    # Admissions
+    CreateAdmissionRequest:
+      type: object
+      required: [visit_id, admission_diagnosis]
+      properties:
+        visit_id: { type: integer }
+        admission_diagnosis: { type: string }
+        bed_id: { type: integer }
+
+    DischargeAdmissionRequest:
+      type: object
+      required: [discharge_diagnosis, discharge_summary]
+      properties:
+        discharge_diagnosis: { type: string }
+        discharge_summary: { type: string }
+
+    TransferBedRequest:
+      type: object
+      required: [new_bed_id]
+      properties:
+        new_bed_id: { type: integer }
+        notes: { type: string }
+
+    # System
+    CreateDepartmentRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code: { type: string, maxLength: 50 }
+        name: { type: string, maxLength: 100 }
+        description: { type: string, maxLength: 255 }
+        head_doctor_id: { type: integer }
+
+    UpdateDepartmentRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        is_active: { type: boolean }
+        head_doctor_id: { type: integer }
+
+    DepartmentResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        description: { type: string }
+        is_active: { type: boolean }
+        head_doctor: { $ref: '#/components/schemas/UserResponse' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateMedicalServiceRequest:
+      type: object
+      required: [code, name, service_type, base_price]
+      properties:
+        code: { type: string, maxLength: 50 }
+        name: { type: string, maxLength: 100 }
+        description: { type: string }
+        service_type: { type: string }
+        base_price: { type: number, minimum: 0 }
+        department_id: { type: integer }
+
+    UpdateMedicalServiceRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        service_type: { type: string }
+        base_price: { type: number, minimum: 0 }
+        is_active: { type: boolean }
+        department_id: { type: integer }
+
+    MedicalServiceResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        description: { type: string }
+        service_type: { type: string }
+        base_price: { type: number }
+        is_active: { type: boolean }
+        department: { $ref: '#/components/schemas/DepartmentResponse' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    AuditLogResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        user: { $ref: '#/components/schemas/UserResponse' }
+        action: { type: string }
+        resource: { type: string }
+        resource_id: { type: string }
+        details: {}
+        ip_address: { type: string }
+        user_agent: { type: string }
+        created_at: { type: string, format: date-time }
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, example: ok }
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/AuthResponseData' }
+        '401':
+          description: Invalid credentials
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshTokenRequest' }
+      responses:
+        '200':
+          description: New access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      access_token: { type: string }
+        '401':
+          description: Invalid or expired refresh token
+
+  /api/v1/auth/profile:
+    get:
+      tags: [Auth]
+      summary: Get current user profile
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/UserResponse' }
+        '401':
+          description: Unauthorized
+
+  /api/v1/users:
+    post:
+      tags: [Users]
+      summary: Create user
+      description: Requires permission `users.manage`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateUserRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+    get:
+      tags: [Users]
+      summary: List users
+      description: Requires permission `users.manage`
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: Paginated list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by ID
+      description: Requires permission `users.manage`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    put:
+      tags: [Users]
+      summary: Update user
+      description: Requires permission `users.manage`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateUserRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      tags: [Users]
+      summary: Delete user
+      description: Requires permission `users.manage`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/users/{id}/roles:
+    post:
+      tags: [Users]
+      summary: Assign roles to user
+      description: Requires permission `users.manage`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AssignRolesRequest' }
+      responses:
+        '200':
+          description: Roles assigned
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/patients/stats:
+    get:
+      tags: [Patients]
+      summary: Patient statistics
+      description: Requires permission `patients.view`
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Stats object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/patients/search:
+    get:
+      tags: [Patients]
+      summary: Search patients
+      description: Requires permission `patients.view`
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: Paginated list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/patients/code/{code}:
+    get:
+      tags: [Patients]
+      summary: Get patient by code
+      description: Requires permission `patients.view`
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Patient details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/PatientResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/patients:
+    post:
+      tags: [Patients]
+      summary: Register patient
+      description: Requires permission `patients.create`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePatientRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/PatientResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+    get:
+      tags: [Patients]
+      summary: List patients
+      description: Requires permission `patients.view`
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 10 }
+        - name: gender
+          in: query
+          schema: { type: string }
+        - name: blood_type
+          in: query
+          schema: { type: string }
+        - name: city
+          in: query
+          schema: { type: string }
+        - name: is_active
+          in: query
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: Paginated list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/patients/{id}:
+    get:
+      tags: [Patients]
+      summary: Get patient by ID
+      description: Requires permission `patients.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Patient details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/PatientResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    put:
+      tags: [Patients]
+      summary: Update patient
+      description: Requires permission `patients.update`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdatePatientRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/PatientResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      tags: [Patients]
+      summary: Delete patient
+      description: Requires permission `patients.delete`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/patients/{id}/allergies:
+    post:
+      tags: [Patients]
+      summary: Add allergy
+      description: Requires permission `patients.create`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                allergen: { type: string }
+                severity: { type: string }
+                reaction: { type: string }
+                is_active: { type: boolean }
+      responses:
+        '201':
+          description: Created
+        '403':
+          description: Forbidden
+    get:
+      tags: [Patients]
+      summary: List patient allergies
+      description: Requires permission `patients.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List of allergies
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/patients/{id}/medical-history:
+    post:
+      tags: [Patients]
+      summary: Add medical history
+      description: Requires permission `patients.create`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                condition_name: { type: string }
+                diagnosed_date: { type: string, format: date }
+                status: { type: string }
+                notes: { type: string }
+      responses:
+        '201':
+          description: Created
+        '403':
+          description: Forbidden
+    get:
+      tags: [Patients]
+      summary: List medical history
+      description: Requires permission `patients.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/appointments:
+    get:
+      tags: [Appointments]
+      summary: List appointments
+      description: Requires permission `appointments.view`
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: Paginated list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedResponse' }
+        '403':
+          description: Forbidden
+    post:
+      tags: [Appointments]
+      summary: Schedule appointment
+      description: Requires permission `appointments.create`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateAppointmentRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+
+  /api/v1/appointments/upcoming:
+    get:
+      tags: [Appointments]
+      summary: Upcoming appointments
+      description: Requires permission `appointments.view`
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/appointments/code/{code}:
+    get:
+      tags: [Appointments]
+      summary: Get appointment by code
+      description: Requires permission `appointments.view`
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Appointment details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/appointments/{id}:
+    get:
+      tags: [Appointments]
+      summary: Get appointment by ID
+      description: Requires permission `appointments.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Appointment details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    put:
+      tags: [Appointments]
+      summary: Reschedule appointment
+      description: Requires permission `appointments.update`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateAppointmentRequest' }
+      responses:
+        '200':
+          description: Updated
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/appointments/{id}/cancel:
+    post:
+      tags: [Appointments]
+      summary: Cancel appointment
+      description: Requires permission `appointments.cancel`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CancelAppointmentRequest' }
+      responses:
+        '200':
+          description: Cancelled
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/appointments/{id}/confirm:
+    post:
+      tags: [Appointments]
+      summary: Confirm appointment
+      description: Requires permission `appointments.manage`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Confirmed
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/appointments/{id}/start:
+    post:
+      tags: [Appointments]
+      summary: Start appointment
+      description: Requires permission `appointments.manage`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Started
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/appointments/{id}/complete:
+    post:
+      tags: [Appointments]
+      summary: Complete appointment
+      description: Requires permission `appointments.manage`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Completed
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/appointments/{id}/no-show:
+    post:
+      tags: [Appointments]
+      summary: Mark no-show
+      description: Requires permission `appointments.manage`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Updated
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/visits:
+    get:
+      tags: [Visits]
+      summary: List visits
+      description: Requires permission `visits.view`
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: Paginated list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedResponse' }
+        '403':
+          description: Forbidden
+    post:
+      tags: [Visits]
+      summary: Create visit
+      description: Requires permission `visits.create`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateVisitRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+
+  /api/v1/visits/code/{code}:
+    get:
+      tags: [Visits]
+      summary: Get visit by code
+      description: Requires permission `visits.view`
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Visit details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/visits/{id}:
+    get:
+      tags: [Visits]
+      summary: Get visit by ID
+      description: Requires permission `visits.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Visit details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    put:
+      tags: [Visits]
+      summary: Update visit
+      description: Requires permission `visits.update`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateVisitRequest' }
+      responses:
+        '200':
+          description: Updated
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/visits/{id}/complete:
+    post:
+      tags: [Visits]
+      summary: Complete visit
+      description: Requires permission `visits.complete`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Completed
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/visits/{id}/cancel:
+    post:
+      tags: [Visits]
+      summary: Cancel visit
+      description: Requires permission `visits.delete`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Cancelled
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/icd10-codes/search:
+    get:
+      tags: [ICD-10 & Diagnoses]
+      summary: Search ICD-10 codes
+      description: Requires permission `diagnoses.view`
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer }
+        - name: page_size
+          in: query
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Paginated list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/icd10-codes/{code}:
+    get:
+      tags: [ICD-10 & Diagnoses]
+      summary: Get ICD-10 by code
+      description: Requires permission `diagnoses.view`
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: ICD-10 details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/icd10-codes/category/{category}:
+    get:
+      tags: [ICD-10 & Diagnoses]
+      summary: Get ICD-10 by category
+      description: Requires permission `diagnoses.view`
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/diagnoses:
+    post:
+      tags: [ICD-10 & Diagnoses]
+      summary: Add diagnosis
+      description: Requires permission `diagnoses.create`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateDiagnosisRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+
+  /api/v1/diagnoses/{id}:
+    get:
+      tags: [ICD-10 & Diagnoses]
+      summary: Get diagnosis
+      description: Requires permission `diagnoses.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Diagnosis details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    put:
+      tags: [ICD-10 & Diagnoses]
+      summary: Update diagnosis
+      description: Requires permission `diagnoses.update`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                diagnosis_status: { type: string, enum: [PROVISIONAL, CONFIRMED, RULED_OUT] }
+                clinical_notes: { type: string }
+      responses:
+        '200':
+          description: Updated
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      tags: [ICD-10 & Diagnoses]
+      summary: Delete diagnosis
+      description: Requires permission `diagnoses.delete`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/visits/{id}/diagnoses:
+    get:
+      tags: [ICD-10 & Diagnoses]
+      summary: Get visit diagnoses
+      description: Requires permission `diagnoses.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/patients/{id}/diagnoses:
+    get:
+      tags: [ICD-10 & Diagnoses]
+      summary: Get patient diagnoses
+      description: Requires permission `diagnoses.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/medications/search:
+    get:
+      tags: [Medications & Prescriptions]
+      summary: Search medications
+      description: Requires permission `prescriptions.view`
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/medications/{id}:
+    get:
+      tags: [Medications & Prescriptions]
+      summary: Get medication
+      description: Requires permission `prescriptions.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Medication details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/prescriptions:
+    post:
+      tags: [Medications & Prescriptions]
+      summary: Create prescription
+      description: Requires permission `prescriptions.create`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePrescriptionRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+
+  /api/v1/prescriptions/{id}:
+    get:
+      tags: [Medications & Prescriptions]
+      summary: Get prescription
+      description: Requires permission `prescriptions.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Prescription details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    put:
+      tags: [Medications & Prescriptions]
+      summary: Update prescription
+      description: Requires permission `prescriptions.update`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes: { type: string }
+      responses:
+        '200':
+          description: Updated
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/prescriptions/code/{code}:
+    get:
+      tags: [Medications & Prescriptions]
+      summary: Get prescription by code
+      description: Requires permission `prescriptions.view`
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Prescription details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/prescriptions/{id}/dispense:
+    post:
+      tags: [Medications & Prescriptions]
+      summary: Dispense prescription
+      description: Requires permission `prescriptions.dispense`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Dispensed
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/prescriptions/{id}/complete:
+    post:
+      tags: [Medications & Prescriptions]
+      summary: Complete prescription
+      description: Requires permission `prescriptions.dispense`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Completed
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/prescriptions/{id}/cancel:
+    post:
+      tags: [Medications & Prescriptions]
+      summary: Cancel prescription
+      description: Requires permission `prescriptions.delete`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Cancelled
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/visits/{id}/prescriptions:
+    get:
+      tags: [Medications & Prescriptions]
+      summary: Get visit prescriptions
+      description: Requires permission `prescriptions.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/patients/{id}/prescriptions:
+    get:
+      tags: [Medications & Prescriptions]
+      summary: Get patient prescriptions
+      description: Requires permission `prescriptions.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/beds/available:
+    get:
+      tags: [Beds & Admissions]
+      summary: Get available beds
+      description: Requires permission `beds.view`
+      parameters:
+        - name: department
+          in: query
+          schema: { type: string }
+        - name: bed_type
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: List of available beds
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/beds/{number}:
+    get:
+      tags: [Beds & Admissions]
+      summary: Get bed by number
+      description: Requires permission `beds.view`
+      parameters:
+        - name: number
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Bed details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/admissions:
+    post:
+      tags: [Beds & Admissions]
+      summary: Create admission
+      description: Requires permission `admissions.create`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateAdmissionRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+
+  /api/v1/admissions/active:
+    get:
+      tags: [Beds & Admissions]
+      summary: List active admissions
+      description: Requires permission `admissions.view`
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/admissions/{id}:
+    get:
+      tags: [Beds & Admissions]
+      summary: Get admission by ID
+      description: Requires permission `admissions.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Admission details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/admissions/code/{code}:
+    get:
+      tags: [Beds & Admissions]
+      summary: Get admission by code
+      description: Requires permission `admissions.view`
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Admission details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/admissions/{id}/discharge:
+    post:
+      tags: [Beds & Admissions]
+      summary: Discharge admission
+      description: Requires permission `admissions.discharge`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DischargeAdmissionRequest' }
+      responses:
+        '200':
+          description: Discharged
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/admissions/{id}/transfer-bed:
+    post:
+      tags: [Beds & Admissions]
+      summary: Transfer bed
+      description: Requires permission `beds.manage`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TransferBedRequest' }
+      responses:
+        '200':
+          description: Transferred
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/admissions/{id}/nursing-notes:
+    post:
+      tags: [Beds & Admissions]
+      summary: Add nursing note
+      description: Requires permission `nursing_notes.create`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note_type: { type: string }
+                content: { type: string }
+                recorded_at: { type: string, format: date-time }
+      responses:
+        '201':
+          description: Created
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    get:
+      tags: [Beds & Admissions]
+      summary: List nursing notes
+      description: Requires permission `nursing_notes.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/patients/{id}/admissions:
+    get:
+      tags: [Beds & Admissions]
+      summary: Get patient admissions
+      description: Requires permission `admissions.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/inventory:
+    post:
+      tags: [Inventory & Dispensing]
+      summary: Add stock
+      description: Requires permission `inventory.manage`
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [medication_id, quantity]
+              properties:
+                medication_id: { type: integer }
+                quantity: { type: integer, minimum: 1 }
+                batch_number: { type: string }
+                expiry_date: { type: string, format: date }
+      responses:
+        '201':
+          description: Created
+        '403':
+          description: Forbidden
+
+  /api/v1/inventory/medication/{id}:
+    get:
+      tags: [Inventory & Dispensing]
+      summary: Get medication stock
+      description: Requires permission `inventory.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Stock info
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/inventory/low-stock:
+    get:
+      tags: [Inventory & Dispensing]
+      summary: Low stock alerts
+      description: Requires permission `inventory.view`
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/inventory/expiring-soon:
+    get:
+      tags: [Inventory & Dispensing]
+      summary: Expiring soon alerts
+      description: Requires permission `inventory.view`
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/dispensing:
+    post:
+      tags: [Inventory & Dispensing]
+      summary: Dispense prescription
+      description: Requires permission `dispensing.dispense`
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prescription_id]
+              properties:
+                prescription_id: { type: integer }
+                items: { type: array, items: { type: object } }
+      responses:
+        '201':
+          description: Created
+        '403':
+          description: Forbidden
+
+  /api/v1/prescriptions/{id}/dispensing:
+    get:
+      tags: [Inventory & Dispensing]
+      summary: Get prescription dispensing records
+      description: Requires permission `dispensing.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/patients/{id}/dispensing:
+    get:
+      tags: [Inventory & Dispensing]
+      summary: Get patient dispensing history
+      description: Requires permission `dispensing.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/invoices:
+    post:
+      tags: [Invoices & Payments]
+      summary: Create invoice
+      description: Requires permission `invoices.create`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateInvoiceRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+
+  /api/v1/invoices/{id}:
+    get:
+      tags: [Invoices & Payments]
+      summary: Get invoice
+      description: Requires permission `invoices.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Invoice details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/invoices/code/{code}:
+    get:
+      tags: [Invoices & Payments]
+      summary: Get invoice by code
+      description: Requires permission `invoices.view`
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Invoice details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/patients/{id}/invoices:
+    get:
+      tags: [Invoices & Payments]
+      summary: Get patient invoices
+      description: Requires permission `invoices.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/payments:
+    post:
+      tags: [Invoices & Payments]
+      summary: Create payment
+      description: Requires permission `payments.process`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePaymentRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+
+  /api/v1/invoices/{id}/payments:
+    get:
+      tags: [Invoices & Payments]
+      summary: Get invoice payments
+      description: Requires permission `payments.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/insurance-claims:
+    post:
+      tags: [Insurance]
+      summary: Create insurance claim
+      description: Requires permission `insurance_claims.manage`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateInsuranceClaimRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+
+  /api/v1/insurance-claims/{id}/approve:
+    post:
+      tags: [Insurance]
+      summary: Approve claim
+      description: Requires permission `insurance_claims.manage`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                approved_amount: { type: number, minimum: 0 }
+      responses:
+        '200':
+          description: Approved
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/insurance-claims/{id}/reject:
+    post:
+      tags: [Insurance]
+      summary: Reject claim
+      description: Requires permission `insurance_claims.manage`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rejection_reason]
+              properties:
+                rejection_reason: { type: string }
+      responses:
+        '200':
+          description: Rejected
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/invoices/{id}/insurance-claims:
+    get:
+      tags: [Insurance]
+      summary: Get invoice claims
+      description: Requires permission `insurance_claims.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/system/departments:
+    post:
+      tags: [System]
+      summary: Create department
+      description: Requires permission `departments.create`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateDepartmentRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DepartmentResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+    get:
+      tags: [System]
+      summary: List departments
+      description: Requires permission `departments.view`
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: Paginated list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/system/departments/{id}:
+    get:
+      tags: [System]
+      summary: Get department
+      description: Requires permission `departments.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Department details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DepartmentResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    put:
+      tags: [System]
+      summary: Update department
+      description: Requires permission `departments.update`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateDepartmentRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/DepartmentResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      tags: [System]
+      summary: Delete department
+      description: Requires permission `departments.delete`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/system/services:
+    post:
+      tags: [System]
+      summary: Create medical service
+      description: Requires permission `services.create`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateMedicalServiceRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/MedicalServiceResponse' }
+        '400':
+          description: Bad request
+        '403':
+          description: Forbidden
+    get:
+      tags: [System]
+      summary: List medical services
+      description: Requires permission `services.view`
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 10 }
+        - name: department_id
+          in: query
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Paginated list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/system/services/{id}:
+    get:
+      tags: [System]
+      summary: Get medical service
+      description: Requires permission `services.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Service details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/MedicalServiceResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    put:
+      tags: [System]
+      summary: Update medical service
+      description: Requires permission `services.update`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateMedicalServiceRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/MedicalServiceResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/system/audit-logs:
+    get:
+      tags: [System]
+      summary: List audit logs
+      description: Requires permission `audit.view`
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 10 }
+        - name: user_id
+          in: query
+          schema: { type: integer }
+        - name: resource
+          in: query
+          schema: { type: string }
+        - name: from_date
+          in: query
+          description: YYYY-MM-DD
+          schema: { type: string, format: date }
+        - name: to_date
+          in: query
+          description: YYYY-MM-DD
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Paginated list of audit logs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AuditLogResponse' }
+        '400':
+          description: Invalid date format
+        '403':
+          description: Forbidden
+
+  /api/v1/patients/{id}/appointments:
+    get:
+      tags: [Appointments]
+      summary: Get patient appointments
+      description: Requires permission `appointments.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/doctors/{id}/schedule:
+    get:
+      tags: [Appointments]
+      summary: Get doctor schedule
+      description: Requires permission `appointments.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Schedule
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/doctors/{id}/available-slots:
+    get:
+      tags: [Appointments]
+      summary: Get available time slots
+      description: Requires permission `appointments.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: date
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: List of time slots
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/patients/{id}/visits:
+    get:
+      tags: [Visits]
+      summary: Get patient visits
+      description: Requires permission `visits.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/doctors/{id}/visits:
+    get:
+      tags: [Visits]
+      summary: Get doctor visits
+      description: Requires permission `visits.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/allergies/{allergyId}:
+    get:
+      tags: [Allergies]
+      summary: Get allergy
+      description: Requires permission `patients.view`
+      parameters:
+        - name: allergyId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Allergy details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    put:
+      tags: [Allergies]
+      summary: Update allergy
+      description: Requires permission `patients.update`
+      parameters:
+        - name: allergyId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                allergen: { type: string }
+                severity: { type: string }
+                reaction: { type: string }
+                is_active: { type: boolean }
+      responses:
+        '200':
+          description: Updated
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      tags: [Allergies]
+      summary: Delete allergy
+      description: Requires permission `patients.delete`
+      parameters:
+        - name: allergyId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/medical-history/{historyId}:
+    get:
+      tags: [Medical History]
+      summary: Get medical history record
+      description: Requires permission `patients.view`
+      parameters:
+        - name: historyId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Record details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    put:
+      tags: [Medical History]
+      summary: Update medical history
+      description: Requires permission `patients.update`
+      parameters:
+        - name: historyId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                condition_name: { type: string }
+                diagnosed_date: { type: string }
+                status: { type: string }
+                notes: { type: string }
+      responses:
+        '200':
+          description: Updated
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      tags: [Medical History]
+      summary: Delete medical history
+      description: Requires permission `patients.delete`
+      parameters:
+        - name: historyId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /api/v1/patients/{id}/allergies/active:
+    get:
+      tags: [Patients]
+      summary: Get active allergies
+      description: Requires permission `patients.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
+
+  /api/v1/patients/{id}/medical-history/active:
+    get:
+      tags: [Patients]
+      summary: Get active conditions
+      description: Requires permission `patients.view`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '403':
+          description: Forbidden
